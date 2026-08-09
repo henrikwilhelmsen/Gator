@@ -5,17 +5,23 @@ import (
 	"os"
 )
 
-// The Gator config filename
-const configFileName = ".gatorconfig.json"
+const (
+	configFileName = ".gatorconfig.json"
+	// Environment variable for overriding the config filepath
+	ConfigFilePathEnvVar = "GATOR_CONFIG_FILEPATH"
+)
 
-// Struct representing the Gator config
 type Config struct {
 	DbURL           string `json:"db_url"`
 	CurrentUserName string `json:"current_user_name"`
 }
 
-// Get the config filepath
+// Get the config filepath. Uses ConfigFilePathEnvVar if set, otherwise the default path
 func getConfigFilePath() (string, error) {
+	if envPath := os.Getenv(ConfigFilePathEnvVar); envPath != "" {
+		return envPath, nil
+	}
+
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
