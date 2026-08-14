@@ -20,7 +20,7 @@ type Commands struct {
 	CommandsToHandlers map[string]func(*State, Command) error
 }
 
-// Run the command with the given state if a handler can be located.
+// Run executes the command with the given state if a handler can be located.
 func (c *Commands) Run(s *State, cmd Command) error {
 	handler, ok := c.CommandsToHandlers[cmd.Name]
 	if !ok {
@@ -29,12 +29,13 @@ func (c *Commands) Run(s *State, cmd Command) error {
 	return handler(s, cmd)
 }
 
-// Register a new command handler
+// Register registers the given name to the given handler function.
 func (c *Commands) Register(name string, f func(*State, Command) error) {
 	c.CommandsToHandlers[name] = f
 }
 
-// Login handler, set the current user to the given argument
+// LoginHandler sets the current user to the given commands single argument. The
+// cmd must have exactly one argument, the user name. Anything else will return error.
 func HandlerLogin(s *State, cmd Command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf(
@@ -50,4 +51,14 @@ func HandlerLogin(s *State, cmd Command) error {
 
 	fmt.Printf("Current user set to %s\n", cmd.Args[0])
 	return nil
+}
+
+// SetupRegisterCommands sets up and returns a Commands struct, with all supported
+// commands registered. The current commands are: login
+func SetupRegisterCommands() *Commands {
+	commands := Commands{
+		CommandsToHandlers: make(map[string]func(*State, Command) error),
+	}
+	commands.Register("login", HandlerLogin)
+	return &commands
 }

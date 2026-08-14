@@ -9,17 +9,11 @@ import (
 )
 
 func main() {
+	// Load the config
 	config, err := config.Read()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Setup and register commands
-	state := cli.State{Config: &config}
-	commands := cli.Commands{
-		CommandsToHandlers: make(map[string]func(*cli.State, cli.Command) error),
-	}
-	commands.Register("login", cli.HandlerLogin)
 
 	// Read arguments
 	args := os.Args
@@ -27,8 +21,12 @@ func main() {
 		log.Fatal("Expected at least one command")
 	}
 
-	// Run commands
+	// Get the state and command objects
+	state := cli.State{Config: &config}
 	command := cli.Command{Name: args[1], Args: args[2:]}
+	commands := cli.SetupRegisterCommands()
+
+	// Run the command
 	err = commands.Run(&state, command)
 	if err != nil {
 		log.Fatal(err)
