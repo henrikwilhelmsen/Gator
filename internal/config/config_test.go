@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestGetConfigFilePath tests that the getConfigFilePath function returns the expected path
 func TestGetConfigFilePath(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -18,6 +19,8 @@ func TestGetConfigFilePath(t *testing.T) {
 	}
 }
 
+// TestGetConfigFilePathEnv tests that we can override the config
+// path with an environment variable
 func TestGetConfigFilePathEnv(t *testing.T) {
 	want := "foo/bar"
 	os.Setenv(ConfigFilePathEnvVar, want)
@@ -28,20 +31,16 @@ func TestGetConfigFilePathEnv(t *testing.T) {
 	}
 }
 
-// Test a config read/write roundtrip
+// TestWriteReadFromFile tests a config read/write roundtrip
 func TestWriteReadFromFile(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "tmpConfigDir")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir during setup: %v", err)
-	}
-
+	tmpDir := t.TempDir()
 	filePath := tmpDir + "/testconfig.json"
 	config := Config{DbURL: "postgres://example", CurrentUserName: "jane"}
 	// Override the default config path so we can test using a temp file
 	os.Setenv(ConfigFilePathEnvVar, filePath)
 
 	// Test that we can write to file with no errors
-	err = writeToFile(filePath, &config)
+	err := writeToFile(filePath, &config)
 	if err != nil {
 		t.Fatalf("writeToFile(%q, %v) = %v, want match for nil", filePath, config, err)
 	}
@@ -53,20 +52,17 @@ func TestWriteReadFromFile(t *testing.T) {
 	}
 }
 
-// Test updating a config user
+// TestConfigSetUser tests that the SetUser method updates the config file and that the
+// Read function returns an updated config.
 func TestConfigSetUser(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "tmpConfigDir")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir during setup: %v", err)
-	}
-
+	tmpDir := t.TempDir()
 	filePath := tmpDir + "/testconfig.json"
 	config := Config{DbURL: "postgres://example", CurrentUserName: "jane"}
 	// Override the default config path so we can test using a temp file
 	os.Setenv(ConfigFilePathEnvVar, filePath)
 
 	// Write the original config file
-	err = writeToFile(filePath, &config)
+	err := writeToFile(filePath, &config)
 	if err != nil {
 		t.Fatalf("writeToFile(%q, %v) = %v, want match for nil", filePath, config, err)
 	}
