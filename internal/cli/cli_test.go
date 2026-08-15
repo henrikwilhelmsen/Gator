@@ -35,6 +35,11 @@ func (m *mockDB) GetUser(ctx context.Context, name string) (database.User, error
 	return u, nil
 }
 
+func (m *mockDB) DeleteAll(ctx context.Context) error {
+	m.users = map[string]database.User{}
+	return nil
+}
+
 func getMockState() State {
 	testUser := "jane"
 	cfg := config.Config{DbURL: "postgres://example", CurrentUserName: testUser}

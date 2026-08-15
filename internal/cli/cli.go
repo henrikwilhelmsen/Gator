@@ -99,6 +99,17 @@ func HandlerRegister(s *State, cmd Command) error {
 	return nil
 }
 
+// HandlerReset resets the state of the program by deleting all records in the database.
+// This exists only because we are operating on a toy database to make development easier.
+func HandlerReset(s *State, cmd Command) error {
+	err := s.Db.DeleteAll(context.Background())
+	if err != nil {
+		return err
+	}
+	fmt.Println("Successfully reset database")
+	return nil
+}
+
 // SetupRegisterCommands sets up and returns a Commands struct, with all supported
 // commands registered. The current commands are: login
 func SetupRegisterCommands() *Commands {
@@ -107,5 +118,6 @@ func SetupRegisterCommands() *Commands {
 	}
 	commands.Register("login", HandlerLogin)
 	commands.Register("register", HandlerRegister)
+	commands.Register("reset", HandlerReset)
 	return &commands
 }
