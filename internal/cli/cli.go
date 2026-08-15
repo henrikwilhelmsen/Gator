@@ -1,13 +1,18 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 type State struct {
 	Config *config.Config
+	Db     *database.Queries
 }
 
 type Command struct {
@@ -44,12 +49,53 @@ func HandlerLogin(s *State, cmd Command) error {
 			len(cmd.Args))
 	}
 
-	err := s.Config.SetUser(cmd.Args[0])
+	// Will error and return if the user has not been added to the database
+	_, err := s.Db.GetUser(context.Background(), cmd.Args[0])
+	if err != nil {
+		return err
+	}
+
+	err = s.Config.SetUser(cmd.Args[0])
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Current user set to %s\n", cmd.Args[0])
+	return nil
+}
+
+// HandlerRegister registers the given username in the database.
+func HandlerRegister(s *State, cmd Command) error {
+	// Check that we only have one argument
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf(
+			"Command '%s' expects exactly 1 argument (username), got %d",
+			cmd.Name,
+			len(cmd.Args))
+	}
+
+	// Create the user in the database
+	usr, err := s.Db.CreateUser(
+		context.Background(),
+		database.CreateUserParams{
+			ID:        uuid.New(),
+			Name:      cmd.Args[0],
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// Update the config
+	err = s.Config.SetUser(cmd.Args[0])
+	if err != nil {
+		return err
+	}
+
+	// Print result and return nil
+	fmt.Printf("Registered user: %v\n", usr)
 	return nil
 }
 
@@ -60,5 +106,6 @@ func SetupRegisterCommands() *Commands {
 		CommandsToHandlers: make(map[string]func(*State, Command) error),
 	}
 	commands.Register("login", HandlerLogin)
+	commands.Register("register", HandlerRegister)
 	return &commands
 }
