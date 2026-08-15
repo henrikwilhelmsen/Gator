@@ -2,5 +2,6 @@ words = [
     "gatorconfig",
     "getenv",
     "mkdir",
+    "querier",
     "sqlc",
 ]

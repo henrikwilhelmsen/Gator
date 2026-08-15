@@ -12,7 +12,7 @@ import (
 
 type State struct {
 	Config *config.Config
-	Db     *database.Queries
+	Db     database.Querier
 }
 
 type Command struct {
