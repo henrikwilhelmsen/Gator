@@ -110,6 +110,22 @@ func HandlerReset(s *State, cmd Command) error {
 	return nil
 }
 
+// HandlerUsers print all of the users to the console
+func HandlerUsers(s *State, cmd Command) error {
+	users, err := s.Db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, usr := range users {
+		if usr.Name == s.Config.CurrentUserName {
+			fmt.Printf("* %s (current)\n", usr.Name)
+		} else {
+			fmt.Printf("* %s\n", usr.Name)
+		}
+	}
+	return nil
+}
+
 // SetupRegisterCommands sets up and returns a Commands struct, with all supported
 // commands registered. The current commands are: login
 func SetupRegisterCommands() *Commands {
@@ -119,5 +135,6 @@ func SetupRegisterCommands() *Commands {
 	commands.Register("login", HandlerLogin)
 	commands.Register("register", HandlerRegister)
 	commands.Register("reset", HandlerReset)
+	commands.Register("users", HandlerUsers)
 	return &commands
 }

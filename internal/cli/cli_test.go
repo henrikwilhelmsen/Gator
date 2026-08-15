@@ -3,8 +3,11 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"log"
+	"fmt"
+	"maps"
+	"math/rand"
 	"os"
+	"slices"
 	"testing"
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
@@ -33,6 +36,11 @@ func (m *mockDB) GetUser(ctx context.Context, name string) (database.User, error
 		return database.User{}, sql.ErrNoRows
 	}
 	return u, nil
+}
+
+func (m *mockDB) GetUsers(ctx context.Context) ([]database.User, error) {
+	users := slices.Collect(maps.Values(m.users))
+	return users, nil
 }
 
 func (m *mockDB) DeleteAll(ctx context.Context) error {
@@ -71,7 +79,7 @@ func TestLogin(t *testing.T) {
 	command := Command{Name: "login", Args: []string{testUser}}
 	err := commands.Run(&state, command)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatalf("unexpected error running login command: %v", err)
 	}
 
 	// Read the config and check that CurrentUserName has been updated.
@@ -119,5 +127,39 @@ func TestRegister(t *testing.T) {
 	if got.CurrentUserName != testUser {
 		t.Fatalf("register alice = %q, want current user config match for %q",
 			got.CurrentUserName, testUser)
+	}
+}
+
+// TestReset tests that the reset command deletes all users in the database
+func TestReset(t *testing.T) {
+	// Override the config file with a tempfile
+	tmpDir := t.TempDir()
+	os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+
+	// Get a mocked state object and set up the commands
+	state := getMockState()
+	commands := SetupRegisterCommands()
+
+	// Register a random number of users
+	for i := range rand.Intn(20) {
+		userName := fmt.Sprintf("testUser%d", i)
+		cmdRegister := Command{Name: "register", Args: []string{userName}}
+		commands.Run(&state, cmdRegister)
+	}
+
+	// Run the reset cmdReset
+	cmdReset := Command{Name: "reset", Args: []string{}}
+	err := commands.Run(&state, cmdReset)
+	if err != nil {
+		t.Fatalf("failed to run the reset command: %v", err)
+	}
+
+	// Check that the database has been cleared
+	got, err := state.Db.GetUsers(context.Background())
+	if err != nil {
+		t.Fatalf("failed to read users from db: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("database returned %d users, expected 0 after reset command", len(got))
 	}
 }
