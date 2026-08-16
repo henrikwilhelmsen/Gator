@@ -35,9 +35,9 @@ build_binary:
 
 golangci_lint:
   stage: lint
-  image: golangci/golangci-lint:latest
+  image: golangci/golangci-lint:v2.12.2
   script:
-    - golangci-lint run --out-format checkstyle ./... > report.xml
+    - golangci-lint run --output.checkstyle.path=report.xml
   artifacts:
     reports:
       codequality: report.xml
