@@ -7,20 +7,26 @@ stages:
 variables:
   GOPROXY: "https://proxy.golang.org"
   GOFLAGS: "-mod=readonly"
-  CGO_ENABLED: 1
+  CGO_ENABLED: 0
+  GOPATH: "$CI_PROJECT_DIR/go"
+  GOCACHE: "$CI_PROJECT_DIR/.cache/go-build"
 
-resolve_dependencies:
-  stage: dependencies
-  script:
-    - go mod download
+.go_cache: &go_cache
   cache:
     key: $CI_COMMIT_REF_SLUG
     paths:
       - .cache/go-build
       - go/pkg/mod
 
+resolve_dependencies:
+  stage: dependencies
+  <<: *go_cache
+  script:
+    - go mod download
+
 build_binary:
   stage: build
+  <<: *go_cache
   script:
     - go build -v -ldflags "-s -w" -o gator
   artifacts:
@@ -38,6 +44,13 @@ golangci_lint:
 
 run_tests:
   stage: test
+  <<: *go_cache
+  variables:
+    # Required for the -race flag
+    CGO_ENABLED: 1
+  before_script:
+    # Needed for cgo
+    - apk add --no-cache build-base
   script:
     - go test ./... -coverprofile=coverage.txt -covermode atomic -v -race
     - go get github.com/boumenot/gocover-cobertura
