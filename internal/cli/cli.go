@@ -29,7 +29,7 @@ type Commands struct {
 func (c *Commands) Run(s *State, cmd Command) error {
 	handler, ok := c.CommandsToHandlers[cmd.Name]
 	if !ok {
-		return fmt.Errorf("No handler for command '%s' registered", cmd.Name)
+		return fmt.Errorf("no handler for command '%s' registered", cmd.Name)
 	}
 	return handler(s, cmd)
 }
@@ -44,7 +44,7 @@ func (c *Commands) Register(name string, f func(*State, Command) error) {
 func HandlerLogin(s *State, cmd Command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf(
-			"Command '%s' expects exactly 1 argument (username), got %d",
+			"command '%s' expects exactly 1 argument (username), got %d",
 			cmd.Name,
 			len(cmd.Args))
 	}
@@ -69,7 +69,7 @@ func HandlerRegister(s *State, cmd Command) error {
 	// Check that we only have one argument
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf(
-			"Command '%s' expects exactly 1 argument (username), got %d",
+			"command '%s' expects exactly 1 argument (username), got %d",
 			cmd.Name,
 			len(cmd.Args))
 	}

@@ -20,12 +20,7 @@ type mockDB struct {
 
 func (m *mockDB) CreateUser(
 	ctx context.Context, arg database.CreateUserParams) (database.User, error) {
-	u := database.User{
-		ID:        arg.ID,
-		CreatedAt: arg.CreatedAt,
-		UpdatedAt: arg.UpdatedAt,
-		Name:      arg.Name,
-	}
+	u := database.User(arg)
 	m.users[arg.Name] = u
 	return u, nil
 }
@@ -68,16 +63,22 @@ func TestLogin(t *testing.T) {
 
 	// Override the config file with a tempfile
 	tmpDir := t.TempDir()
-	os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	// Get a mocked state object and set up the commands
 	state := getMockState()
-	state.Db.CreateUser(context.Background(), database.CreateUserParams{Name: testUser})
+	_, err = state.Db.CreateUser(context.Background(), database.CreateUserParams{Name: testUser})
+	if err != nil {
+		t.Fatalf("unexpected error when creating test user: %v", err)
+	}
 	commands := SetupRegisterCommands()
 
 	// Run the login command
 	command := Command{Name: "login", Args: []string{testUser}}
-	err := commands.Run(&state, command)
+	err = commands.Run(&state, command)
 	if err != nil {
 		t.Fatalf("unexpected error running login command: %v", err)
 	}
@@ -97,7 +98,10 @@ func TestRegister(t *testing.T) {
 
 	// Override the config file with a tempfile
 	tmpDir := t.TempDir()
-	os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	// Get a mocked state object and set up the commands
 	state := getMockState()
@@ -105,7 +109,7 @@ func TestRegister(t *testing.T) {
 
 	// Run the register command
 	command := Command{Name: "register", Args: []string{testUser}}
-	err := commands.Run(&state, command)
+	err = commands.Run(&state, command)
 	if err != nil {
 		t.Fatalf("unexpected error running register command: %v", err)
 	}
@@ -134,7 +138,10 @@ func TestRegister(t *testing.T) {
 func TestReset(t *testing.T) {
 	// Override the config file with a tempfile
 	tmpDir := t.TempDir()
-	os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	// Get a mocked state object and set up the commands
 	state := getMockState()
@@ -144,12 +151,15 @@ func TestReset(t *testing.T) {
 	for i := range rand.Intn(20) {
 		userName := fmt.Sprintf("testUser%d", i)
 		cmdRegister := Command{Name: "register", Args: []string{userName}}
-		commands.Run(&state, cmdRegister)
+		err = commands.Run(&state, cmdRegister)
+		if err != nil {
+			t.Fatalf("unexpected error when creating test user: %v", err)
+		}
 	}
 
 	// Run the reset cmdReset
 	cmdReset := Command{Name: "reset", Args: []string{}}
-	err := commands.Run(&state, cmdReset)
+	err = commands.Run(&state, cmdReset)
 	if err != nil {
 		t.Fatalf("failed to run the reset command: %v", err)
 	}

@@ -21,6 +21,9 @@ func main() {
 
 	// Set up the database connections
 	db, err := sql.Open("postgres", cfg.DbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
 	dbQueries := database.New(db)
 
 	// Read arguments

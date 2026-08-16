@@ -23,7 +23,10 @@ func TestGetConfigFilePath(t *testing.T) {
 // path with an environment variable
 func TestGetConfigFilePathEnv(t *testing.T) {
 	want := "foo/bar"
-	os.Setenv(ConfigFilePathEnvVar, want)
+	err := os.Setenv(ConfigFilePathEnvVar, want)
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	got, err := getConfigFilePath()
 	if got != want || err != nil {
@@ -37,10 +40,13 @@ func TestWriteReadFromFile(t *testing.T) {
 	filePath := tmpDir + "/testconfig.json"
 	config := Config{DbURL: "postgres://example", CurrentUserName: "jane"}
 	// Override the default config path so we can test using a temp file
-	os.Setenv(ConfigFilePathEnvVar, filePath)
+	err := os.Setenv(ConfigFilePathEnvVar, filePath)
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	// Test that we can write to file with no errors
-	err := writeToFile(filePath, &config)
+	err = writeToFile(filePath, &config)
 	if err != nil {
 		t.Fatalf("writeToFile(%q, %v) = %v, want match for nil", filePath, config, err)
 	}
@@ -59,16 +65,23 @@ func TestConfigSetUser(t *testing.T) {
 	filePath := tmpDir + "/testconfig.json"
 	config := Config{DbURL: "postgres://example", CurrentUserName: "jane"}
 	// Override the default config path so we can test using a temp file
-	os.Setenv(ConfigFilePathEnvVar, filePath)
+	err := os.Setenv(ConfigFilePathEnvVar, filePath)
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
 
 	// Write the original config file
-	err := writeToFile(filePath, &config)
+	err = writeToFile(filePath, &config)
 	if err != nil {
 		t.Fatalf("writeToFile(%q, %v) = %v, want match for nil", filePath, config, err)
 	}
 
 	// Update the user and check that we get the updated version when reading
-	config.SetUser("john")
+	err = config.SetUser("john")
+	if err != nil {
+		t.Fatalf("unexpected error when setting config user: %v", err)
+	}
+
 	got, err := Read()
 	if got.CurrentUserName != "john" || err != nil {
 		t.Fatalf("readFromFile(%q) = %v, %v, want match for %q, nil", filePath, got, err, config)
