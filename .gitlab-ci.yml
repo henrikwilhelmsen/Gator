@@ -1,0 +1,47 @@
+image: golang:1.26-alpine
+stages:
+  - dependencies
+  - build
+  - test
+  - lint
+variables:
+  GOPROXY: "https://proxy.golang.org"
+  GOFLAGS: "-mod=readonly"
+
+resolve_dependencies:
+  stage: dependencies
+  script:
+    - go mod download
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - .cache/go-build
+      - go/pkg/mod
+
+build_binary:
+  stage: build
+  script:
+    - go build -v -ldflags "-s -w" -o gator
+  artifacts:
+    paths:
+      - gator
+
+golangci_lint:
+  stage: lint
+  image: golangci/golangci-lint:latest
+  script:
+    - golangci-lint run --out-format checkstyle ./... > report.xml
+  artifacts:
+    reports:
+      codequality: report.xml
+
+run_tests:
+  stage: test
+  script:
+    - go test -v -race ./...
+  coverage: '/^coverage: \d+\.\d+\% of statements/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
