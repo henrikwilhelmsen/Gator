@@ -1,5 +1,6 @@
 image: golang:1.26-alpine
 stages:
+  - dependencies
   - build
   - lint
   - test
@@ -7,6 +8,16 @@ variables:
   GOPROXY: "https://proxy.golang.org"
   GOFLAGS: "-mod=readonly"
   CGO_ENABLED: 1
+
+resolve_dependencies:
+  stage: dependencies
+  script:
+    - go mod download
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - .cache/go-build
+      - go/pkg/mod
 
 build_binary:
   stage: build
