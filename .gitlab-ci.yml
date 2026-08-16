@@ -1,22 +1,12 @@
 image: golang:1.26-alpine
 stages:
-  - dependencies
   - build
-  - test
   - lint
+  - test
 variables:
   GOPROXY: "https://proxy.golang.org"
   GOFLAGS: "-mod=readonly"
-
-resolve_dependencies:
-  stage: dependencies
-  script:
-    - go mod download
-  cache:
-    key: $CI_COMMIT_REF_SLUG
-    paths:
-      - .cache/go-build
-      - go/pkg/mod
+  CGO_ENABLED: 1
 
 build_binary:
   stage: build
@@ -37,9 +27,9 @@ golangci_lint:
 
 run_tests:
   stage: test
-  script:
-    - go test -v -race ./...
-  coverage: '/^coverage: \d+\.\d+\% of statements/'
+    - go test ./... -coverprofile=coverage.txt -covermode atomic -v -race
+    - go get github.com/boumenot/gocover-cobertura
+    - go run github.com/boumenot/gocover-cobertura < coverage.txt > coverage.xml
   artifacts:
     reports:
       coverage_report:
