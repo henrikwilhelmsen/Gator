@@ -7,6 +7,7 @@ import (
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/rss"
 	"github.com/google/uuid"
 )
 
@@ -46,7 +47,8 @@ func HandlerLogin(s *State, cmd Command) error {
 		return fmt.Errorf(
 			"command '%s' expects exactly 1 argument (username), got %d",
 			cmd.Name,
-			len(cmd.Args))
+			len(cmd.Args),
+		)
 	}
 
 	// Will error and return if the user has not been added to the database
@@ -71,7 +73,8 @@ func HandlerRegister(s *State, cmd Command) error {
 		return fmt.Errorf(
 			"command '%s' expects exactly 1 argument (username), got %d",
 			cmd.Name,
-			len(cmd.Args))
+			len(cmd.Args),
+		)
 	}
 
 	// Create the user in the database
@@ -126,6 +129,27 @@ func HandlerUsers(s *State, cmd Command) error {
 	return nil
 }
 
+// HandlerAgg sets up the RSS aggregator
+func HandlerAgg(s *State, cmd Command) error {
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf(
+			"command '%s' expects no arguments, got %d",
+			cmd.Name,
+			len(cmd.Args),
+		)
+	}
+
+	// fetch a single feed for testing and lesson submission
+	url := "https://www.wagslane.dev/index.xml"
+	feed, err := rss.FetchFeed(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(feed)
+	return nil
+}
+
 // SetupRegisterCommands sets up and returns a Commands struct, with all supported
 // commands registered. The current commands are: login
 func SetupRegisterCommands() *Commands {
@@ -136,5 +160,6 @@ func SetupRegisterCommands() *Commands {
 	commands.Register("register", HandlerRegister)
 	commands.Register("reset", HandlerReset)
 	commands.Register("users", HandlerUsers)
+	commands.Register("agg", HandlerAgg)
 	return &commands
 }
