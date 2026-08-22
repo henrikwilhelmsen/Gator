@@ -2,60 +2,15 @@ package cli
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"maps"
 	"math/rand"
 	"os"
-	"slices"
 	"testing"
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/mock"
 )
-
-type mockDB struct {
-	users map[string]database.User
-}
-
-func (m *mockDB) CreateUser(
-	ctx context.Context, arg database.CreateUserParams) (database.User, error) {
-	u := database.User(arg)
-	m.users[arg.Name] = u
-	return u, nil
-}
-
-func (m *mockDB) GetUser(ctx context.Context, name string) (database.User, error) {
-	u, ok := m.users[name]
-	if !ok {
-		return database.User{}, sql.ErrNoRows
-	}
-	return u, nil
-}
-
-func (m *mockDB) GetUsers(ctx context.Context) ([]database.User, error) {
-	users := slices.Collect(maps.Values(m.users))
-	return users, nil
-}
-
-func (m *mockDB) DeleteAll(ctx context.Context) error {
-	m.users = map[string]database.User{}
-	return nil
-}
-
-func getMockState() State {
-	testUser := "jane"
-	cfg := config.Config{DbURL: "postgres://example", CurrentUserName: testUser}
-	db := &mockDB{
-		users: make(map[string]database.User),
-	}
-	db.users[testUser] = database.User{Name: testUser}
-
-	return State{
-		Config: &cfg,
-		Db:     db,
-	}
-}
 
 // TestLogin tests that the login command sets the user to the given argument
 func TestLogin(t *testing.T) {
@@ -69,7 +24,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	// Get a mocked state object and set up the commands
-	state := getMockState()
+	state := mock.GetMockState()
 	_, err = state.Db.CreateUser(context.Background(), database.CreateUserParams{Name: testUser})
 	if err != nil {
 		t.Fatalf("unexpected error when creating test user: %v", err)
@@ -104,7 +59,7 @@ func TestRegister(t *testing.T) {
 	}
 
 	// Get a mocked state object and set up the commands
-	state := getMockState()
+	state := mock.GetMockState()
 	commands := SetupRegisterCommands()
 
 	// Run the register command
@@ -144,7 +99,7 @@ func TestReset(t *testing.T) {
 	}
 
 	// Get a mocked state object and set up the commands
-	state := getMockState()
+	state := mock.GetMockState()
 	commands := SetupRegisterCommands()
 
 	// Register a random number of users

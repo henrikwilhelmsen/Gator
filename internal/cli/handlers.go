@@ -5,44 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/rss"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 	"github.com/google/uuid"
 )
 
-type State struct {
-	Config *config.Config
-	Db     database.Querier
-}
-
-type Command struct {
-	Name string
-	Args []string
-}
-
-type Commands struct {
-	// Mapping of command names to handler functions
-	CommandsToHandlers map[string]func(*State, Command) error
-}
-
-// Run executes the command with the given state if a handler can be located.
-func (c *Commands) Run(s *State, cmd Command) error {
-	handler, ok := c.CommandsToHandlers[cmd.Name]
-	if !ok {
-		return fmt.Errorf("no handler for command '%s' registered", cmd.Name)
-	}
-	return handler(s, cmd)
-}
-
-// Register registers the given name to the given handler function.
-func (c *Commands) Register(name string, f func(*State, Command) error) {
-	c.CommandsToHandlers[name] = f
-}
-
 // LoginHandler sets the current user to the given commands single argument. The
 // cmd must have exactly one argument, the user name. Anything else will return error.
-func HandlerLogin(s *State, cmd Command) error {
+func HandlerLogin(s *state.State, cmd Command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf(
 			"command '%s' expects exactly 1 argument (username), got %d",
@@ -67,7 +38,7 @@ func HandlerLogin(s *State, cmd Command) error {
 }
 
 // HandlerRegister registers the given username in the database.
-func HandlerRegister(s *State, cmd Command) error {
+func HandlerRegister(s *state.State, cmd Command) error {
 	// Check that we only have one argument
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf(
@@ -104,8 +75,12 @@ func HandlerRegister(s *State, cmd Command) error {
 
 // HandlerReset resets the state of the program by deleting all records in the database.
 // This exists only because we are operating on a toy database to make development easier.
-func HandlerReset(s *State, cmd Command) error {
-	err := s.Db.DeleteAll(context.Background())
+func HandlerReset(s *state.State, cmd Command) error {
+	err := s.Db.DeleteAllUsers(context.Background())
+	if err != nil {
+		return err
+	}
+	err = s.Db.DeleteAllFeeds(context.Background())
 	if err != nil {
 		return err
 	}
@@ -114,7 +89,7 @@ func HandlerReset(s *State, cmd Command) error {
 }
 
 // HandlerUsers print all of the users to the console
-func HandlerUsers(s *State, cmd Command) error {
+func HandlerUsers(s *state.State, cmd Command) error {
 	users, err := s.Db.GetUsers(context.Background())
 	if err != nil {
 		return err
@@ -130,7 +105,7 @@ func HandlerUsers(s *State, cmd Command) error {
 }
 
 // HandlerAgg sets up the RSS aggregator
-func HandlerAgg(s *State, cmd Command) error {
+func HandlerAgg(s *state.State, cmd Command) error {
 	if len(cmd.Args) != 0 {
 		return fmt.Errorf(
 			"command '%s' expects no arguments, got %d",
@@ -150,16 +125,7 @@ func HandlerAgg(s *State, cmd Command) error {
 	return nil
 }
 
-// SetupRegisterCommands sets up and returns a Commands struct, with all supported
-// commands registered. The current commands are: login
-func SetupRegisterCommands() *Commands {
-	commands := Commands{
-		CommandsToHandlers: make(map[string]func(*State, Command) error),
-	}
-	commands.Register("login", HandlerLogin)
-	commands.Register("register", HandlerRegister)
-	commands.Register("reset", HandlerReset)
-	commands.Register("users", HandlerUsers)
-	commands.Register("agg", HandlerAgg)
-	return &commands
+func HandlerAddFeed(s *state.State, cmd Command) error {
+	// get current user and connect to the feed
+	return nil
 }

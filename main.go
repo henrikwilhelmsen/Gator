@@ -10,6 +10,7 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/cli"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 	}
 
 	// Get the state and command objects
-	state := cli.State{Config: &cfg, Db: dbQueries}
+	state := state.State{Config: &cfg, Db: dbQueries}
 	command := cli.Command{Name: args[1], Args: args[2:]}
 	commands := cli.SetupRegisterCommands()
 
