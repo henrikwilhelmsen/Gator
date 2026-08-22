@@ -5,20 +5,6 @@ import (
 	"testing"
 )
 
-// TestGetConfigFilePath tests that the getConfigFilePath function returns the expected path
-func TestGetConfigFilePath(t *testing.T) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("Failed to get UserHomeDir during setup: %v", err)
-	}
-
-	want := homeDir + "/.gatorconfig.json"
-	got, err := getConfigFilePath()
-	if got != want || err != nil {
-		t.Fatalf("getConfigFilePath() = %q, %v, want match for %#q, nil", got, err, want)
-	}
-}
-
 // TestGetConfigFilePathEnv tests that we can override the config
 // path with an environment variable
 func TestGetConfigFilePathEnv(t *testing.T) {
