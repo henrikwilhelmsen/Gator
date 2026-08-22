@@ -2,16 +2,18 @@
 
 A RSS feed aggre**gator** built in Go as a [boot.dev](boot.dev) guided project.
 
-## Dev Requirements
+## Dev Setup
 
-- Go
-- PostgreSQL
-- Goose
-- SQLC
+This project uses [Nix](https://nixos.org/) to manage the dev environment, install it on your machine and then follow the quick-start.
 
-## Nix Setup (Highly Recommended)
+The following requirements will be installed and configured automatically:
 
-If you use [Nix](https://nixos.org/), a fully self-contained development environment is provided via the included `flake.nix`. It automatically handles installing Go, PostgreSQL 18, Goose, SQLC, and the `boot.dev` CLI locally inside the project without modifying your global system.
+- [Go](https://go.dev/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Goose](https://github.com/pressly/goose)
+- [SQLC](https://sqlc.dev)
+
+See the [nix flake](./flake.nix) for the full configuration.
 
 ### 1. Quick-Start
 
@@ -34,13 +36,15 @@ You can now run the CLI:
 go run . register <username>
 ```
 
-To run the tests (does not require a database setup):
+To run the tests:
 
 ```shell
 go test ./...
 ```
 
 ### 2. Additional Commands
+
+#### PostgreSQL
 
 Start the local, database server:
 
@@ -60,7 +64,9 @@ To stop the PostgreSQL server when you are done:
 pg-stop
 ```
 
-Running migrations:
+#### Goose
+
+Goose is used to run migrations, with the following commands:
 
 ```shell
 goose up
@@ -70,68 +76,14 @@ goose up
 goose down
 ```
 
-Generate database code:
+#### SQLC
+
+SQLC is used to generate Go code to interact with our database, from the queries and migrations in the [sql directory](./sql).
+
+To generate database code:
 
 ```shell
 sqlc generate
 ```
 
-## Manual Dev Setup
-
-### PostgreSQL
-
-**MacOS:**
-
-```shell
-brew install postgresql@18
-```
-
-Verify the install:
-
-```shell
-psql --version
-```
-
-Start the postgres service:
-
-```shell
-brew services start postgresql@18
-```
-
-### Goose
-
-See the [Goose install instructions](https://github.com/pressly/goose#install) or run the below command:
-
-```shell
-go install github.com/pressly/goose/v3/cmd/goose@latest
-```
-
-After installation, create a `.env` file with the appropriate data filled in, matching the [example_dot_env](./example_dot_env) file, so Goose picks up the migrations directory and you don't have to have the DB url and driver in the command.
-
-Once the `.env` file is set up you can run the migrations with:
-
-```shell
-goose up
-```
-
-```shell
-goose down
-```
-
-### SQLC
-
-SQLC is used to generate Go code to interact with our database.
-
-To install, see the [SQLC install docs](https://docs.sqlc.dev/en/latest/overview/install.html) or run the below command to install with Go:
-
-```shell
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-```
-
-When installed, you can generate Go code from the `./sql` directory with the `generate` command:
-
-```shell
-sqlc generate
-```
-
-See the [database package](./internal/database/db.go) for the generated code.
+The generated code ends up in [./internal/database](./internal/database)
