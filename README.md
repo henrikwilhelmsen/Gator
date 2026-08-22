@@ -9,7 +9,74 @@ A RSS feed aggre**gator** built in Go as a [boot.dev](boot.dev) guided project.
 - Goose
 - SQLC
 
-## Dev Setup
+## Nix Setup (Highly Recommended)
+
+If you use [Nix](https://nixos.org/), a fully self-contained development environment is provided via the included `flake.nix`. It automatically handles installing Go, PostgreSQL 18, Goose, SQLC, and the `boot.dev` CLI locally inside the project without modifying your global system.
+
+### 1. Quick-Start
+
+Run the following command in the project root to activate the environment:
+
+```shell
+nix develop
+```
+
+Start the database and run migrations:
+
+```shell
+pg-start
+goose up
+```
+
+You can now run the CLI:
+
+```shell
+go run . register <username>
+```
+
+To run the tests (does not require a database setup):
+
+```shell
+go test ./...
+```
+
+### 2. Additional Commands
+
+Start the local, database server:
+
+```shell
+pg-start
+```
+
+To connect to the database command line:
+
+```shell
+pg-console
+```
+
+To stop the PostgreSQL server when you are done:
+
+```shell
+pg-stop
+```
+
+Running migrations:
+
+```shell
+goose up
+```
+
+```shell
+goose down
+```
+
+Generate database code:
+
+```shell
+sqlc generate
+```
+
+## Manual Dev Setup
 
 ### PostgreSQL
 
