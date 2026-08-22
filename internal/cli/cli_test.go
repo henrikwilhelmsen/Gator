@@ -10,6 +10,7 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/mock"
+	"github.com/google/uuid"
 )
 
 // TestLogin tests that the login command sets the user to the given argument
@@ -126,5 +127,61 @@ func TestReset(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Fatalf("database returned %d users, expected 0 after reset command", len(got))
+	}
+}
+
+// TestAddFeed tests that the addfeed command adds a feed to the database with the
+// expected name and url.
+func TestAddFeed(t *testing.T) {
+	// Override the config file with a tempfile
+	tmpDir := t.TempDir()
+	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
+	if err != nil {
+		t.Fatalf("unexpected error when setting config env var: %v", err)
+	}
+
+	testUser := "jill"
+	testUserID := uuid.New()
+
+	// Get a mocked state object and set up the user data
+	state := mock.GetMockState()
+
+	_, err = state.Db.CreateUser(
+		context.Background(),
+		database.CreateUserParams{Name: testUser, ID: testUserID},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error when creating test user: %v", err)
+	}
+
+	err = state.Config.SetUser(testUser)
+	if err != nil {
+		t.Fatalf("unexpected error when setting current user: %v", err)
+	}
+
+	// Set up the commands
+	commands := SetupRegisterCommands()
+
+	// Run the addfeed command
+	feedName := "HW Animation Tech Blog"
+	feedUrl := "https://hwanimation.tech/feed"
+	cmdReset := Command{Name: "addfeed", Args: []string{feedName, feedUrl}}
+	err = commands.Run(&state, cmdReset)
+	if err != nil {
+		t.Fatalf("failed to run the reset command: %v", err)
+	}
+
+	// Check that the feed was added to the database
+	got, err := state.Db.GetFeed(context.Background(), feedUrl)
+	if err != nil {
+		t.Fatalf("failed to get feed from db: %v", err)
+	}
+	if got.Name != feedName || got.Url != feedUrl || got.UserID != testUserID {
+		t.Fatalf(`
+			"added feed data mismatch,
+			got name: %s url: %s user_id: %s,
+			want name: %s url: %s, user_id: %s"`,
+			got.Name, got.Url, got.UserID,
+			feedName, feedUrl, testUserID)
 	}
 }

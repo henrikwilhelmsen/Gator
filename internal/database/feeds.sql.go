@@ -66,11 +66,11 @@ func (q *Queries) DeleteAllFeeds(ctx context.Context) error {
 
 const getFeed = `-- name: GetFeed :one
 SELECT id, created_at, updated_at, name, url, user_id FROM feeds
-WHERE name = $1
+WHERE url = $1
 `
 
-func (q *Queries) GetFeed(ctx context.Context, name string) (Feed, error) {
-	row := q.db.QueryRowContext(ctx, getFeed, name)
+func (q *Queries) GetFeed(ctx context.Context, url string) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, getFeed, url)
 	var i Feed
 	err := row.Scan(
 		&i.ID,
