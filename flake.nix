@@ -13,17 +13,64 @@
       });
     in
     {
-      devShells = forEachSupportedSystem ({ pkgs }: {
-        default = pkgs.mkShell {
-          packages = with pkgs; [
-            go
-            goose
-            sqlc
-            postgresql_18
-            nil # nix lsp
-          ];
+      devShells = forEachSupportedSystem ({ pkgs }:
+        let
+          pg-start = pkgs.writeShellApplication {
+            name = "pg-start";
+            runtimeInputs = [ pkgs.postgresql_18 ];
+            text = ''
+              if pg_ctl status >/dev/null 2>&1; then
+                echo "PostgreSQL is already running."
+              else
+                echo "Starting PostgreSQL..."
+                pg_ctl -l "$PGDATA/server.log" start
+                until pg_isready -h "$PGHOST" -p "$PGPORT" >/dev/null 2>&1; do
+                  sleep 0.1
+                done
+                if ! psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -lqt | cut -d \| -f 1 | grep -qw "$PGDATABASE"; then
+                  echo "Creating database '$PGDATABASE'..."
+                  createdb -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE"
+                fi
+              fi
+            '';
+          };
 
-          shellHook = ''
+          pg-stop = pkgs.writeShellApplication {
+            name = "pg-stop";
+            runtimeInputs = [ pkgs.postgresql_18 ];
+            text = ''
+              if pg_ctl status >/dev/null 2>&1; then
+                echo "Stopping PostgreSQL..."
+                pg_ctl stop
+              else
+                echo "PostgreSQL is not running."
+              fi
+            '';
+          };
+
+          pg-console = pkgs.writeShellApplication {
+            name = "pg-console";
+            runtimeInputs = [ pkgs.postgresql_18 ];
+            text = ''
+              psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"
+            '';
+          };
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              go
+              goose
+              sqlc
+              postgresql_18
+              fish
+              nil # nix lsp
+              pg-start
+              pg-stop
+              pg-console
+            ];
+
+            shellHook = ''
             # Contain the database files in a .nix directory
             export PGDATA="$PWD/.nix/db"
             export PGPORT=5432
@@ -80,35 +127,8 @@ EOF
               go install github.com/bootdotdev/bootdev@latest
             fi
 
-            # 5. Helper commands for database management
-            pg-start() {
-              if pg_ctl status >/dev/null 2>&1; then
-                echo "PostgreSQL is already running."
-              else
-                echo "Starting PostgreSQL..."
-                pg_ctl -l "$PGDATA/server.log" start
-                until pg_isready -h "$PGHOST" -p "$PGPORT" >/dev/null 2>&1; do
-                  sleep 0.1
-                done
-                if ! psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -lqt | cut -d \| -f 1 | grep -qw "$PGDATABASE"; then
-                  echo "Creating database '$PGDATABASE'..."
-                  createdb -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE"
-                fi
-              fi
-            }
-
-            pg-stop() {
-              if pg_ctl status >/dev/null 2>&1; then
-                echo "Stopping PostgreSQL..."
-                pg_ctl stop
-              else
-                echo "PostgreSQL is not running."
-              fi
-            }
-
-            pg-console() {
-              psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"
-            }
+            # 5. pg-start, pg-stop, and pg-console are provided as standalone
+            # packages (see the `let` block above) so they work under any shell.
 
             echo "=== Gator Nix Dev Environment ==="
             echo "Available tools:"
@@ -116,15 +136,21 @@ EOF
             echo "  - goose: $(goose --version 2>&1 | head -n 1)"
             echo "  - sqlc: $(sqlc version)"
             echo "  - postgresql: $(postgres --version)"
-            echo "  - bootdev: $(bootdev --version 2>/dev/null || echo \"Installed at \$GOBIN/bootdev\")"
+            echo "  - bootdev: $(bootdev --version 2>/dev/null || echo "Installed at $GOBIN/bootdev")"
             echo ""
             echo "Helper Commands:"
             echo "  pg-start    Start the local PostgreSQL server and create '$PGDATABASE' DB"
             echo "  pg-stop     Stop the local PostgreSQL server"
             echo "  pg-console  Connect directly to the database using psql"
             echo "============================="
-          '';
-        };
-      });
+
+            if [ -z "$IN_GATOR_DEVSHELL" ]; then
+              export IN_GATOR_DEVSHELL=1
+              exec fish
+            fi
+
+            '';
+          };
+        });
     };
 }
