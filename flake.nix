@@ -60,6 +60,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               go
+              golangci-lint
               goose
               sqlc
               postgresql_18
