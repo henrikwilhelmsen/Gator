@@ -61,11 +61,12 @@
             packages = with pkgs; [
               go
               golangci-lint
+              gitlab-ci-ls
+              nil # nix lsp
               goose
               sqlc
               postgresql_18
               fish
-              nil # nix lsp
               pg-start
               pg-stop
               pg-console
