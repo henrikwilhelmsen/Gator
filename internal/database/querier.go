@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error)
+	CreateFeedFollow(ctx context.Context, arg CreateFeedFollowParams) (CreateFeedFollowRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAllFeeds(ctx context.Context) error
 	DeleteAllUsers(ctx context.Context) error
