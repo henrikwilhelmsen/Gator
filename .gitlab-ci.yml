@@ -49,12 +49,15 @@ run_tests:
     # Required for the -race flag
     CGO_ENABLED: 1
   before_script:
-    # Needed for cgo
-    - apk add --no-cache build-base
+    # Use su-exec to run as non-root postgres user. Could be moved to a custom image long-term.
+    # build-base is required for cgo; postgrestest requires initdb and pg_ctl.
+    - apk add --no-cache build-base postgresql su-exec
+    - mkdir -p "$GOPATH" "$GOCACHE"
+    - chown -R postgres:postgres "$CI_PROJECT_DIR"
   script:
-    - go test ./... -coverprofile=coverage.txt -covermode atomic -v -race
-    - go get github.com/boumenot/gocover-cobertura
-    - go run github.com/boumenot/gocover-cobertura < coverage.txt > coverage.xml
+    - su-exec postgres go test ./... -coverprofile=coverage.txt -covermode atomic -v -race
+    - su-exec postgres go get github.com/boumenot/gocover-cobertura
+    - su-exec postgres sh -c 'go run github.com/boumenot/gocover-cobertura < coverage.txt > coverage.xml'
   artifacts:
     reports:
       coverage_report:
