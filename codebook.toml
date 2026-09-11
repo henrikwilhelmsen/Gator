@@ -3,6 +3,7 @@ words = [
     "gatorconfig",
     "getenv",
     "mkdir",
+    "pgt",
     "querier",
     "sqlc",
 ]

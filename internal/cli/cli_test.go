@@ -9,13 +9,64 @@ import (
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
-	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/mock"
+	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 	"github.com/google/uuid"
+	"github.com/pressly/goose/v3"
+	"github.com/stapelberg/postgrestest"
+
+	_ "github.com/lib/pq"
 )
 
-// TestLogin tests that the login command sets the user to the given argument
-func TestLogin(t *testing.T) {
-	testUser := "john"
+var pgt *postgrestest.Server
+
+func TestMain(m *testing.M) {
+	var err error
+	pgt, err = postgrestest.Start(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	defer pgt.Cleanup()
+
+	m.Run()
+}
+
+// newTestState is a test helper function that sets up a new State struct with a test
+// database and config.
+func newTestState(t *testing.T) state.State {
+	t.Helper()
+
+	// Note: This will create a fresh database for each test. Currently not an issue,
+	// testing the package takes ~1s, but that may change with more tests.
+	db, err := pgt.NewDatabase(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		t.Fatalf("configure Goose dialect: %v", err)
+	}
+
+	if err := goose.Up(db, "../../sql/schema"); err != nil {
+		fmt.Fprintf(os.Stderr, "apply migrations: %v\n", err)
+	}
+
+	t.Setenv(config.ConfigFilePathEnvVar, t.TempDir()+"/config.json")
+
+	cfg := &config.Config{
+		DbURL:           "postgres://test",
+		CurrentUserName: "jane",
+	}
+
+	return state.State{
+		Config: cfg,
+		Db:     database.New(db),
+	}
+}
+
+// createTmpTestConfig creates a new config file in a temp dir and overrides the config
+// environment variable with the path to it.
+func createTmpTestConfig(t *testing.T) {
+	t.Helper()
 
 	// Override the config file with a tempfile
 	tmpDir := t.TempDir()
@@ -23,14 +74,20 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error when setting config env var: %v", err)
 	}
+}
 
-	// Get a mocked state object and set up the commands
-	state := mock.GetMockState()
-	_, err = state.Db.CreateUser(context.Background(), database.CreateUserParams{Name: testUser})
+// TestLogin tests that the login command sets the user to the given argument
+func TestLogin(t *testing.T) {
+	// Set up the test data
+	createTmpTestConfig(t)
+	testUser := "john"
+	state := newTestState(t)
+	commands := SetupRegisterCommands()
+
+	_, err := state.Db.CreateUser(context.Background(), database.CreateUserParams{Name: testUser})
 	if err != nil {
 		t.Fatalf("unexpected error when creating test user: %v", err)
 	}
-	commands := SetupRegisterCommands()
 
 	// Run the login command
 	command := Command{Name: "login", Args: []string{testUser}}
@@ -50,22 +107,15 @@ func TestLogin(t *testing.T) {
 // TestRegister tests that the register command registers a user in the database
 // and sets them as the current user in the config
 func TestRegister(t *testing.T) {
+	// Set up the test data
+	createTmpTestConfig(t)
 	testUser := "alice"
-
-	// Override the config file with a tempfile
-	tmpDir := t.TempDir()
-	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
-	if err != nil {
-		t.Fatalf("unexpected error when setting config env var: %v", err)
-	}
-
-	// Get a mocked state object and set up the commands
-	state := mock.GetMockState()
+	state := newTestState(t)
 	commands := SetupRegisterCommands()
 
 	// Run the register command
 	command := Command{Name: "register", Args: []string{testUser}}
-	err = commands.Run(&state, command)
+	err := commands.Run(&state, command)
 	if err != nil {
 		t.Fatalf("unexpected error running register command: %v", err)
 	}
@@ -92,22 +142,16 @@ func TestRegister(t *testing.T) {
 
 // TestReset tests that the reset command deletes all users in the database
 func TestReset(t *testing.T) {
-	// Override the config file with a tempfile
-	tmpDir := t.TempDir()
-	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
-	if err != nil {
-		t.Fatalf("unexpected error when setting config env var: %v", err)
-	}
-
-	// Get a mocked state object and set up the commands
-	state := mock.GetMockState()
+	// Set up the test data
+	createTmpTestConfig(t)
+	state := newTestState(t)
 	commands := SetupRegisterCommands()
 
 	// Register a random number of users
 	for i := range rand.Intn(20) {
 		userName := fmt.Sprintf("testUser%d", i)
 		cmdRegister := Command{Name: "register", Args: []string{userName}}
-		err = commands.Run(&state, cmdRegister)
+		err := commands.Run(&state, cmdRegister)
 		if err != nil {
 			t.Fatalf("unexpected error when creating test user: %v", err)
 		}
@@ -115,7 +159,7 @@ func TestReset(t *testing.T) {
 
 	// Run the reset cmdReset
 	cmdReset := Command{Name: "reset", Args: []string{}}
-	err = commands.Run(&state, cmdReset)
+	err := commands.Run(&state, cmdReset)
 	if err != nil {
 		t.Fatalf("failed to run the reset command: %v", err)
 	}
@@ -133,20 +177,14 @@ func TestReset(t *testing.T) {
 // TestAddFeed tests that the addfeed command adds a feed to the database with the
 // expected name and url.
 func TestAddFeed(t *testing.T) {
-	// Override the config file with a tempfile
-	tmpDir := t.TempDir()
-	err := os.Setenv(config.ConfigFilePathEnvVar, tmpDir+"/testconfig.json")
-	if err != nil {
-		t.Fatalf("unexpected error when setting config env var: %v", err)
-	}
-
+	// Set up the test data
+	createTmpTestConfig(t)
 	testUser := "jill"
 	testUserID := uuid.New()
+	state := newTestState(t)
+	commands := SetupRegisterCommands()
 
-	// Get a mocked state object and set up the user data
-	state := mock.GetMockState()
-
-	_, err = state.Db.CreateUser(
+	_, err := state.Db.CreateUser(
 		context.Background(),
 		database.CreateUserParams{Name: testUser, ID: testUserID},
 	)
@@ -158,9 +196,6 @@ func TestAddFeed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error when setting current user: %v", err)
 	}
-
-	// Set up the commands
-	commands := SetupRegisterCommands()
 
 	// Run the addfeed command
 	feedName := "HW Animation Tech Blog"

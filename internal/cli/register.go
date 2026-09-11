@@ -3,7 +3,7 @@ package cli
 import "git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 
 // SetupRegisterCommands sets up and returns a Commands struct, with all supported
-// commands registered. The current commands are: login
+// commands registered.
 func SetupRegisterCommands() *Commands {
 	commands := Commands{
 		CommandsToHandlers: make(map[string]func(*state.State, Command) error),
