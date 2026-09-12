@@ -6,4 +6,6 @@ words = [
     "pgt",
     "querier",
     "sqlc",
+    "unfollow",
+    "unfollowed",
 ]
