@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// HandlerRegister registers the given username in the database.
-func HandlerRegister(s *state.State, cmd Command) error {
+// handlerRegister registers the given username in the database.
+func handlerRegister(s *state.State, cmd Command) error {
 	err := checkArgs(1, []string{"username"}, cmd)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func HandlerRegister(s *state.State, cmd Command) error {
 
 // LoginHandler sets the current user to the given commands single argument. The
 // cmd must have exactly one argument, the user name. Anything else will return error.
-func HandlerLogin(s *state.State, cmd Command) error {
+func handlerLogin(s *state.State, cmd Command) error {
 	err := checkArgs(1, []string{"username"}, cmd)
 	if err != nil {
 		return err
@@ -65,8 +65,8 @@ func HandlerLogin(s *state.State, cmd Command) error {
 	return nil
 }
 
-// HandlerListUsers print all of the users to the console
-func HandlerListUsers(s *state.State, cmd Command) error {
+// handlerListUsers print all of the users to the console
+func handlerListUsers(s *state.State, cmd Command) error {
 	err := checkArgs(0, []string{}, cmd)
 	if err != nil {
 		return err

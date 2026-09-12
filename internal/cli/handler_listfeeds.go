@@ -7,7 +7,7 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 )
 
-func HandlerListFeeds(s *state.State, cmd Command) error {
+func handlerListFeeds(s *state.State, cmd Command) error {
 	err := checkArgs(0, []string{}, cmd)
 	if err != nil {
 		return err

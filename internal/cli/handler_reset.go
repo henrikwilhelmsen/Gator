@@ -7,9 +7,9 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 )
 
-// HandlerReset resets the state of the program by deleting all records in the database.
+// handlerReset resets the state of the program by deleting all records in the database.
 // This exists only because we are operating on a toy database to make development easier.
-func HandlerReset(s *state.State, cmd Command) error {
+func handlerReset(s *state.State, cmd Command) error {
 	err := checkArgs(0, []string{}, cmd)
 	if err != nil {
 		return err

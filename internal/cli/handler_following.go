@@ -8,7 +8,7 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 )
 
-func HandlerFollowing(s *state.State, cmd Command, user database.User) error {
+func handlerFollowing(s *state.State, cmd Command, user database.User) error {
 	err := checkArgs(0, []string{}, cmd)
 	if err != nil {
 		return err

@@ -8,14 +8,14 @@ func SetupRegisterCommands() *Commands {
 	commands := Commands{
 		CommandsToHandlers: make(map[string]func(*state.State, Command) error),
 	}
-	commands.Register("login", HandlerLogin)
-	commands.Register("register", HandlerRegister)
-	commands.Register("reset", HandlerReset)
-	commands.Register("users", HandlerListUsers)
-	commands.Register("agg", HandlerAgg)
-	commands.Register("addfeed", middlewareLoggedIn(HandlerAddFeed))
-	commands.Register("feeds", HandlerListFeeds)
-	commands.Register("follow", middlewareLoggedIn(HandlerFollow))
-	commands.Register("following", middlewareLoggedIn(HandlerFollowing))
+	commands.Register("login", handlerLogin)
+	commands.Register("register", handlerRegister)
+	commands.Register("reset", handlerReset)
+	commands.Register("users", handlerListUsers)
+	commands.Register("agg", handlerAgg)
+	commands.Register("addfeed", middlewareLoggedIn(handlerAddFeed))
+	commands.Register("feeds", handlerListFeeds)
+	commands.Register("follow", middlewareLoggedIn(handlerFollow))
+	commands.Register("following", middlewareLoggedIn(handlerFollowing))
 	return &commands
 }

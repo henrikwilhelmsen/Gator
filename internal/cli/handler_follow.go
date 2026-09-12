@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerFollow(s *state.State, cmd Command, user database.User) error {
+func handlerFollow(s *state.State, cmd Command, user database.User) error {
 	err := checkArgs(1, []string{"url"}, cmd)
 	if err != nil {
 		return err

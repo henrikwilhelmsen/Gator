@@ -8,8 +8,8 @@ import (
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/state"
 )
 
-// HandlerAgg sets up the RSS aggregator
-func HandlerAgg(s *state.State, cmd Command) error {
+// handlerAgg sets up the RSS aggregator
+func handlerAgg(s *state.State, cmd Command) error {
 	err := checkArgs(0, []string{}, cmd)
 	if err != nil {
 		return err
