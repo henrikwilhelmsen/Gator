@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerFollow(s *state.State, cmd Command) error {
+func HandlerFollow(s *state.State, cmd Command, user database.User) error {
 	err := checkArgs(1, []string{"url"}, cmd)
 	if err != nil {
 		return err
@@ -26,16 +26,6 @@ func HandlerFollow(s *state.State, cmd Command) error {
 		)
 	}
 
-	// Get the current user
-	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to get current user (%s) from database: %w",
-			s.Config.CurrentUserName,
-			err,
-		)
-	}
-
 	// Create a new feed follow entry
 	feedFollowRow, err := s.Db.CreateFeedFollow(
 		context.Background(),
@@ -43,7 +33,7 @@ func HandlerFollow(s *state.State, cmd Command) error {
 			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
-			UserID:    currentUser.ID,
+			UserID:    user.ID,
 			FeedID:    feed.ID,
 		},
 	)

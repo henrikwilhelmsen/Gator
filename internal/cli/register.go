@@ -13,9 +13,9 @@ func SetupRegisterCommands() *Commands {
 	commands.Register("reset", HandlerReset)
 	commands.Register("users", HandlerListUsers)
 	commands.Register("agg", HandlerAgg)
-	commands.Register("addfeed", HandlerAddFeed)
+	commands.Register("addfeed", middlewareLoggedIn(HandlerAddFeed))
 	commands.Register("feeds", HandlerListFeeds)
-	commands.Register("follow", HandlerFollow)
-	commands.Register("following", HandlerFollowing)
+	commands.Register("follow", middlewareLoggedIn(HandlerFollow))
+	commands.Register("following", middlewareLoggedIn(HandlerFollowing))
 	return &commands
 }

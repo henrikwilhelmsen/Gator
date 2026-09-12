@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerAddFeed(s *state.State, cmd Command) error {
+func HandlerAddFeed(s *state.State, cmd Command, user database.User) error {
 	err := checkArgs(2, []string{"name", "url"}, cmd)
 	if err != nil {
 		return err
@@ -19,22 +19,13 @@ func HandlerAddFeed(s *state.State, cmd Command) error {
 	name := cmd.Args[0]
 	url := cmd.Args[1]
 
-	currentUser, err := s.Db.GetUser(context.Background(), s.Config.CurrentUserName)
-	if err != nil {
-		return fmt.Errorf(
-			"failed to get current user (%s) from database: %w",
-			s.Config.CurrentUserName,
-			err,
-		)
-	}
-
 	feed, err := s.Db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),
 		Name:      name,
 		Url:       url,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create feed: %w", err)
@@ -44,7 +35,7 @@ func HandlerAddFeed(s *state.State, cmd Command) error {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID:    currentUser.ID,
+		UserID:    user.ID,
 		FeedID:    feed.ID,
 	})
 	if err != nil {
