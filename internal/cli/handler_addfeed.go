@@ -40,35 +40,23 @@ func HandlerAddFeed(s *state.State, cmd Command) error {
 		return fmt.Errorf("failed to create feed: %w", err)
 	}
 
-	fmt.Println("Feed added:")
+	_, err = s.Db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID:    currentUser.ID,
+		FeedID:    feed.ID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create feed follow: %w", err)
+	}
+
+	fmt.Println("Feed added and followed:")
 	fmt.Println("	ID:       ", feed.ID)
 	fmt.Println("	Name:     ", feed.Name)
 	fmt.Println("	URL:      ", feed.Url)
 	fmt.Println("	CreateAt: ", feed.CreatedAt)
 	fmt.Println("	UpdatedAt:", feed.UpdatedAt)
 	fmt.Println("	UserID:   ", feed.UserID)
-	return nil
-}
-
-func HandlerListFeeds(s *state.State, cmd Command) error {
-	err := checkArgs(0, []string{}, cmd)
-	if err != nil {
-		return err
-	}
-	feeds, err := s.Db.GetFeeds(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to get feeds from database: %w", err)
-	}
-	for _, feed := range feeds {
-		user, err := s.Db.GetUserByID(context.Background(), feed.UserID)
-		if err != nil {
-			return fmt.Errorf("failed to get username from database: %w", err)
-		}
-
-		fmt.Println("Feed:")
-		fmt.Println("	Name:    ", feed.Name)
-		fmt.Println("	URL:     ", feed.Url)
-		fmt.Println("	Added By:", user.Name)
-	}
 	return nil
 }

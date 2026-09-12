@@ -15,5 +15,7 @@ func SetupRegisterCommands() *Commands {
 	commands.Register("agg", HandlerAgg)
 	commands.Register("addfeed", HandlerAddFeed)
 	commands.Register("feeds", HandlerListFeeds)
+	commands.Register("follow", HandlerFollow)
+	commands.Register("following", HandlerFollowing)
 	return &commands
 }

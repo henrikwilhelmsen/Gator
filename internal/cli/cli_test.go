@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/config"
 	"git.hwanimation.tech/henrikwilhelmsen/gator/internal/database"
@@ -200,10 +201,10 @@ func TestAddFeed(t *testing.T) {
 	// Run the addfeed command
 	feedName := "HW Animation Tech Blog"
 	feedUrl := "https://hwanimation.tech/feed"
-	cmdReset := Command{Name: "addfeed", Args: []string{feedName, feedUrl}}
-	err = commands.Run(&state, cmdReset)
+	cmdAddFeed := Command{Name: "addfeed", Args: []string{feedName, feedUrl}}
+	err = commands.Run(&state, cmdAddFeed)
 	if err != nil {
-		t.Fatalf("failed to run the reset command: %v", err)
+		t.Fatalf("failed to run the add feed command: %v", err)
 	}
 
 	// Check that the feed was added to the database
@@ -218,5 +219,60 @@ func TestAddFeed(t *testing.T) {
 			want name: %s url: %s, user_id: %s"`,
 			got.Name, got.Url, got.UserID,
 			feedName, feedUrl, testUserID)
+	}
+}
+
+func TestFeedFollow(t *testing.T) {
+	// Set up the test data
+	createTmpTestConfig(t)
+	userName := "jill"
+	userId := uuid.New()
+	state := newTestState(t)
+	commands := SetupRegisterCommands()
+
+	_, err := state.Db.CreateUser(
+		context.Background(),
+		database.CreateUserParams{Name: userName, ID: userId},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error when creating test user: %v", err)
+	}
+
+	err = state.Config.SetUser(userName)
+	if err != nil {
+		t.Fatalf("unexpected error when setting current user: %v", err)
+	}
+
+	feed, err := state.Db.CreateFeed(context.Background(), database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      "HW Animation Tech Blog",
+		Url:       "https://hwanimation.tech/feed",
+		UserID:    userId,
+	})
+	if err != nil {
+		t.Fatalf("failed to add feed to database: %v", err)
+	}
+
+	// Run the follow command
+	cmdFeedFollow := Command{Name: "follow", Args: []string{feed.Url}}
+	err = commands.Run(&state, cmdFeedFollow)
+	if err != nil {
+		t.Fatalf("failed to run the follow command: %v", err)
+	}
+
+	// Check that the feed was followed
+	got, err := state.Db.GetFeedFollowsForUser(context.Background(), userName)
+	if err != nil {
+		t.Fatalf("failed to get feed from db: %v", err)
+	}
+	if len(got) != 1 || got[0].UserName != userName || got[0].FeedName != feed.Name {
+		t.Fatalf(`
+			"added feed follow data mismatch,
+			got %d feed follows, UserName %s, FeedName %s
+			want %d feed follows, UserName: %s, FeedName: %s"`,
+			len(got), got[0].UserName, got[0].FeedName,
+			1, userName, feed.Name)
 	}
 }

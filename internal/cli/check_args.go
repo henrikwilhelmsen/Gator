@@ -2,6 +2,8 @@ package cli
 
 import "fmt"
 
+// checkArgs checks if the given cmd args matches the wanted number of arguments and
+// argument names.
 func checkArgs(wantLen int, wantNames []string, cmd Command) error {
 	if wantLen == 0 && len(cmd.Args) != 0 {
 		return fmt.Errorf(
