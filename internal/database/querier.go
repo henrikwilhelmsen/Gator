@@ -20,9 +20,11 @@ type Querier interface {
 	GetFeed(ctx context.Context, url string) (Feed, error)
 	GetFeedFollowsForUser(ctx context.Context, name string) ([]GetFeedFollowsForUserRow, error)
 	GetFeeds(ctx context.Context) ([]Feed, error)
+	GetNextFeedToFetch(ctx context.Context) (Feed, error)
 	GetUser(ctx context.Context, name string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUsers(ctx context.Context) ([]User, error)
+	MarkFeedFetched(ctx context.Context, id uuid.UUID) error
 }
 
 var _ Querier = (*Queries)(nil)
