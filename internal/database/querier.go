@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error)
 	CreateFeedFollow(ctx context.Context, arg CreateFeedFollowParams) (CreateFeedFollowRow, error)
+	CreatePost(ctx context.Context, arg CreatePostParams) (Post, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAllFeeds(ctx context.Context) error
 	DeleteAllUsers(ctx context.Context) error
@@ -21,6 +22,7 @@ type Querier interface {
 	GetFeedFollowsForUser(ctx context.Context, name string) ([]GetFeedFollowsForUserRow, error)
 	GetFeeds(ctx context.Context) ([]Feed, error)
 	GetNextFeedToFetch(ctx context.Context) (Feed, error)
+	GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]GetPostsForUserRow, error)
 	GetUser(ctx context.Context, name string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUsers(ctx context.Context) ([]User, error)

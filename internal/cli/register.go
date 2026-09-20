@@ -18,5 +18,6 @@ func SetupRegisterCommands() *Commands {
 	commands.Register("follow", middlewareLoggedIn(handlerFollow))
 	commands.Register("following", middlewareLoggedIn(handlerFollowing))
 	commands.Register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	commands.Register("browse", middlewareLoggedIn(handlerBrowse))
 	return &commands
 }
