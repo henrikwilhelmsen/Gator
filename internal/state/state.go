@@ -1,3 +1,6 @@
+// Copyright 2026 Henrik Wilhelmsen. All rights reserved.
+// SPDX-License-Identifier: MPL-2.0
+
 package state
 
 import (
