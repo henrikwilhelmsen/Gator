@@ -1,8 +1,11 @@
 # Gator
 
-A RSS feed aggre**gator** built in Go as a [boot.dev](boot.dev) guided project.
+A RSS feed aggre**gator** built in Go as a [boot.dev](https://www.boot.dev/courses/build-blog-aggregator-golang) project.
 
-## Dev Setup
+> Note: This is an educational project, where any updates will be focused on learning and experimentation.
+> If you are looking for an RSS reader for daily use, have a look at [miniflux](https://miniflux.app/) which is also written in Go.
+
+## Setup
 
 This project uses [Nix](https://nixos.org/) to manage the dev environment, install it on your machine and then follow the quick-start.
 
@@ -12,6 +15,8 @@ The following requirements will be installed and configured automatically:
 - [PostgreSQL](https://www.postgresql.org/)
 - [Goose](https://github.com/pressly/goose)
 - [SQLC](https://sqlc.dev)
+
+Additionally, it will set up a config file containing the required database link.
 
 See the [nix flake](./flake.nix) for the full configuration.
 
@@ -41,6 +46,8 @@ To run the tests:
 ```shell
 go test ./...
 ```
+
+See [register.go](./internal/cli/register.go) for all commands.
 
 ### 2. Additional Commands
 
@@ -87,3 +94,10 @@ sqlc generate
 ```
 
 The generated code ends up in [./internal/database](./internal/database)
+
+## Future Improvements/Investigation
+
+- [ ] Add a help command
+- [ ] Add a TUI to browse posts
+- [ ] Service manager for the aggregation
+- [ ] Docker (compose) setup
