@@ -35,7 +35,7 @@ build_binary:
 
 golangci_lint:
   stage: lint
-  image: golangci/golangci-lint:v2.12.2
+  image: golangci/golangci-lint:v2.13.2
   script:
     - golangci-lint run --output.checkstyle.path=report.xml
   artifacts:
